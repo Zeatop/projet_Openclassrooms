@@ -1,9 +1,11 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
+import os
 
 
 # Initialisation fonctions
+
 
 
 def get_html_code(url):
@@ -48,7 +50,12 @@ def image_urls(url, page):
     image_url_dict["image url"] = img_url
     img_data = requests.get(img_url).content
     img_name = page.find('div', {"class": "item active"}).find_next()["alt"]
-    with open(f'{img_name}jpg', 'wb') as handler: 
+    wd_path = os.getcwd()
+    folder_path = os.path.join(wd_path,"scrap_output")
+    folder_path = os.path.join(folder_path,img_name)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    with open(f'{folder_path}jpg', 'wb') as handler: 
         handler.write(img_data) 
     return image_url_dict
 
@@ -93,7 +100,12 @@ def category_page_url_harvest(url):
 
 def category_to_csv():
     category = book_data['Category']
-    with open(f'{category}.csv', mode='a', newline='') as fichier_csv:
+    wd_path = os.getcwd()
+    folder_path = os.path.join(wd_path,"scrap_output")
+    folder_path = os.path.join(folder_path,category)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    with open(f'{folder_path}.csv', mode='a', newline='') as fichier_csv:
         fieldnames = ['Title','Category', 'Description', 'UPC',
                       'Product Type', 'Price (excl. tax)', 'Price (incl. tax)', 'Tax', 'Availability', 
                       'Number of reviews', 'image url']
@@ -101,6 +113,7 @@ def category_to_csv():
         if fichier_csv.tell() == 0:
             writer.writeheader()
         writer.writerow(book_data)
+
 
 
 # Récolte des données
