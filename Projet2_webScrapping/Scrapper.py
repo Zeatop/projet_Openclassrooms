@@ -3,98 +3,118 @@ import requests
 from bs4 import BeautifulSoup
 
 
-scrap_dict = {}
-infos_livre = []
-entetes = []
+# Initialisation fonctions
+
 
 def get_html_code(url):
     contenu = requests.get(url)
-    global page
     page = BeautifulSoup(contenu.text, "html.parser")
     return page
     
-def title_n_category():
+def title_n_category(page):
     category = page.find("ul", {"class":"breadcrumb"}).find_next().find_next().find_next().find_next().find_next()
     title = category.find_next().find_next().text
     category = category.text
-    infos_livre.append(title)
-    infos_livre.append(category)
-    #print(f'titre et catégorie: {title}, {category}')
-    if 'Title' not in scrap_dict:
-        scrap_dict['Title'] = []
-        scrap_dict['Category'] = []
-    scrap_dict['Title'].append(title)
-    scrap_dict['Category'].append(category)
-    return scrap_dict
-    #entetes.append("Title")    
-    #entetes.append("Category")
+    category = category[1:-1]
+    title_cat_dict = {'Title':title,'Category': category}
+    return title_cat_dict
     
-def get_description():
-    product_description = page.find("div", {"id" : "product_description"}).find_next()
-    product_description_entete = product_description.text
-    if product_description_entete not in scrap_dict:
-        scrap_dict[product_description_entete] = []
-    #entetes.append(product_description.text)
-    product_description = product_description.find_next().text
-    scrap_dict[product_description_entete].append(product_description)
-    return scrap_dict
-    #infos_livre.append(product_description)    
-    
-def get_table_infos():
+def get_description(page):
+    description_dict = {}
+    try:
+        product_description = page.find("div", {"id" : "product_description"}).find_next()
+        product_description = product_description.find_next().text
+    except AttributeError:
+        print('pas de description')
+        product_description = ('No description')
+    description_dict['Description'] = product_description
+    return description_dict
+ 
+def get_table_infos(page):
+    table_info_dict = {}
     table = (page.find("table", {"class":"table table-striped"}).find_all("tr"))
     for i, row in enumerate(table):
-        #print(f"itération numéro: {i}, entete: {row.find('th').text}  -  info: {row.find('td').text}")
-        if row.find('th').text not in scrap_dict:
-            scrap_dict[row.find('th').text] = []
-        scrap_dict[row.find('th').text].append(row.find('td').text)
-    print(scrap_dict)
-    return scrap_dict
-        #entetes.append(row.find('th').text)
-        #infos_livre.append(row.find('td').text)
+        table_info_dict[row.find('th').text] = ''
+        table_info_dict[row.find('th').text] = (row.find('td').text)
+    table_info_dict['Price (excl. tax)'] = table_info_dict['Price (excl. tax)'][1:]
+    table_info_dict['Price (incl. tax)'] = table_info_dict['Price (incl. tax)'][1:]
+    table_info_dict['Tax'] = table_info_dict['Tax'][1:]
+    return table_info_dict
 
-def image_urls(url):
+def image_urls(url, page):
+    image_url_dict = {}
     img_url = page.find('div', {"class": "item active"}).find_next()["src"]
     img_url = f"https://books.toscrape.com{img_url[5:]}"
-    #print(img_url)
-    if "image url" not in scrap_dict:
-        scrap_dict["image url"] = [] 
-    scrap_dict["image url"].append(img_url)
-    
-def write_to_csv(entetes, infos_livre):
-    fichier_existe = False
-
-    try:
-        with open('output.csv', 'r') as file:
-            reader = csv.reader(file)
-            first_row = next(reader, None)
-            if first_row and not all(cell == '' for cell in first_row):
-                fichier_existe = True
-    except FileNotFoundError:
-        pass
-
-    with open('output.csv', 'a', newline='') as file:
-        writer = csv.writer(file)
-
-        if not fichier_existe:
-            writer.writerow(entetes)
-
-            writer.writerow(infos_livre)
-
+    image_url_dict["image url"] = img_url
+    img_data = requests.get(img_url).content
+    img_name = page.find('div', {"class": "item active"}).find_next()["alt"]
+    with open(f'{img_name}jpg', 'wb') as handler: 
+        handler.write(img_data) 
+    return image_url_dict
 
 def book_scrapper(url):
-    get_html_code(url)
-    title_n_category()
-    print(scrap_dict)
-    get_description()
-    get_table_infos()
-    image_urls(url)
-    print(scrap_dict)
-    print (len(scrap_dict))
-    #print (entetes, infos_livre)
-    #write_to_csv(entetes, infos_livre)
-    
-    
+    page = get_html_code(url)
+    page
+    title_cat_dict = title_n_category(page)
+    description_dict = get_description(page)
+    table_info_dict = get_table_infos(page)
+    image_url_dict = image_urls(url, page)
+    scrap_dict = title_cat_dict.copy()
+    scrap_dict.update(description_dict)
+    scrap_dict.update(table_info_dict)
+    scrap_dict.update(image_url_dict)
+    return scrap_dict
 
-    
+# create a list of all book's urls of a page
+def category_book_url_harvest(url):
+    page = get_html_code(url)
+    page
+    category = page.find_all("div", {"class":"image_container"})
+    for i, links in enumerate(category):
+            div = links.find("a")
+            link= div.get("href")
+            bookurl = f"https://books.toscrape.com/catalogue/{link[6:]}"
+            book_list.append(bookurl)
+    return book_list
+      
+# create a list of all pages' url in a category
+def category_page_url_harvest(url):
+    category_url_list = []
+    category_url_list.append(url)
+    url = url[:-10]
+    for i in list(range(2,101)):
+        url_page = url + "page-" + str(i) + ".html"
+        response = requests.get(url_page)
+        status_code = response.status_code
+        if status_code == 200:
+            category_url_list.append(url_page)
+        else:
+            return category_url_list
 
-book_scrapper("https://books.toscrape.com/catalogue/tipping-the-velvet_999/index.html")
+def category_to_csv():
+    category = book_data['Category']
+    with open(f'{category}.csv', mode='a', newline='') as fichier_csv:
+        fieldnames = ['Title','Category', 'Description', 'UPC',
+                      'Product Type', 'Price (excl. tax)', 'Price (incl. tax)', 'Tax', 'Availability', 
+                      'Number of reviews', 'image url']
+        writer = csv.DictWriter(fichier_csv, fieldnames)
+        if fichier_csv.tell() == 0:
+            writer.writeheader()
+        writer.writerow(book_data)
+
+
+# Récolte des données
+
+url = "https://books.toscrape.com/catalogue/category/books_1/index.html"
+category_page_url_harvest = category_page_url_harvest(url)
+book_list = []
+
+for urls in category_page_url_harvest:
+    category_book_url_harvest(urls)
+print(len(book_list))
+i = 0
+for urls in book_list:
+    i = i+1
+    print(f'{i} - url traitée: {urls}')
+    book_data = book_scrapper(urls)
+    category_to_csv() 
