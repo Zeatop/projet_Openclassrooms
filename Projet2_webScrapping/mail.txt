@@ -1,0 +1,19 @@
+Cher Sam,
+
+J'espère que vous allez bien. Je tenais à vous informer de notre dernière réalisation : un script python pour scrapper via une pipeline ETL (Extract, Transform, Load) le site pour lequel vous nous avez contacté : "https://books.toscrape.com", voici comment il fonctionne :
+
+    Extraction de données : Le script utilise la bibliothèque requests pour récupérer le contenu HTML des pages du site Web.
+
+    Transformation des données : Il utilise la bibliothèque BeautifulSoup pour extraire les données pertinentes, telles que le titre, la catégorie, la description, les informations du tableau, et l'URL de l'image. Les données sont ensuite nettoyées et transformées pour être stockées.
+
+    Chargement des données : Les données sont stockées dans des fichiers CSV distincts pour chaque catégorie de livres.
+
+
+Nous sommes convaincus que ce script représente atout précieux pour votre équipe, permettant d’optimiser le travail en limitant les erreurs humaines.
+
+
+N'hésitez pas à me contacter si vous souhaitez une démonstration ou si vous avez des questions supplémentaires concernant ce script.
+
+Cordialement,
+
+Jackson Léo.

@@ -73,7 +73,7 @@ def book_scrapper(url):
     return scrap_dict
 
 # create a list of all book's urls of a page
-def category_book_url_harvest(url):
+def get_book_url(url, book_list):
     page = get_html_code(url)
     page
     category = page.find_all("div", {"class":"image_container"})
@@ -85,7 +85,7 @@ def category_book_url_harvest(url):
     return book_list
       
 # create a list of all pages' url in a category
-def category_page_url_harvest(url):
+def get_pages_url(url):
     category_url_list = []
     category_url_list.append(url)
     url = url[:-10]
@@ -98,7 +98,7 @@ def category_page_url_harvest(url):
         else:
             return category_url_list
 
-def category_to_csv():
+def category_to_csv(book_data):
     category = book_data['Category']
     wd_path = os.getcwd()
     folder_path = os.path.join(wd_path,"scrap_output")
@@ -116,17 +116,19 @@ def category_to_csv():
 
 
 # Récolte des données
+def do_stuff():
+    url = "https://books.toscrape.com/catalogue/category/books_1/index.html"
+    pages_url_list = get_pages_url(url)
+    book_list = []
 
-url = "https://books.toscrape.com/catalogue/category/books_1/index.html"
-category_page_url_harvest = category_page_url_harvest(url)
-book_list = []
+    for urls in pages_url_list:
+        get_book_url(urls, book_list)
+    print(len(book_list))
+    i = 0
+    for urls in book_list:
+        i = i+1
+        print(f'{i} - url traitée: {urls}')
+        book_data = book_scrapper(urls)
+        category_to_csv(book_data) 
 
-for urls in category_page_url_harvest:
-    category_book_url_harvest(urls)
-print(len(book_list))
-i = 0
-for urls in book_list:
-    i = i+1
-    print(f'{i} - url traitée: {urls}')
-    book_data = book_scrapper(urls)
-    category_to_csv() 
+do_stuff()
