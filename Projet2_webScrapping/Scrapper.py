@@ -2,6 +2,7 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import os
+import re
 
 
 # Initialisation fonctions
@@ -38,24 +39,55 @@ def get_table_infos(page):
     for i, row in enumerate(table):
         table_info_dict[row.find('th').text] = ''
         table_info_dict[row.find('th').text] = (row.find('td').text)
-    table_info_dict['Price (excl. tax)'] = table_info_dict['Price (excl. tax)'][1:]
-    table_info_dict['Price (incl. tax)'] = table_info_dict['Price (incl. tax)'][1:]
-    table_info_dict['Tax'] = table_info_dict['Tax'][1:]
+    table_info_dict['Price (excl. tax)'] = table_info_dict['Price (excl. tax)'][2:]
+    table_info_dict['Price (incl. tax)'] = table_info_dict['Price (incl. tax)'][2:]
+    table_info_dict['Tax'] = table_info_dict['Tax'][2:]
+    table_info_dict['Availability'] = table_info_dict['Availability'][10:-11]
+    print(table_info_dict)
     return table_info_dict
 
+def get_star_rating(page):
+    star_rating_dict = {}
+    rating = page.find("p", {"class" : re.compile("star-rating")})["class"]
+    rating = rating[1]
+    match rating:
+        case 'Five':
+            rating = 5
+        case 'Four':
+            rating = 4
+        case 'Three':
+            rating = 3
+        case 'Two':
+            rating = 2
+        case 'One':
+            rating = 1
+        case 'Zero':
+            rating = 0
+    star_rating_dict['star rating']= rating
+
+    print(star_rating_dict)
+    return star_rating_dict
+
 def image_urls(url, page):
+    def clean_filename(filename):
+        invalid_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']  # caractères non valides pour les noms de fichiers Windows
+        for char in invalid_chars:
+            filename = filename.replace(char, '_')
+        return filename
     image_url_dict = {}
     img_url = page.find('div', {"class": "item active"}).find_next()["src"]
     img_url = f"https://books.toscrape.com{img_url[5:]}"
     image_url_dict["image url"] = img_url
     img_data = requests.get(img_url).content
     img_name = page.find('div', {"class": "item active"}).find_next()["alt"]
-    img_name = img_name.replace('/', '_')
+    img_name = clean_filename(img_name)
+    if len(img_name) > 100:
+        img_name = img_name[:100]
     wd_path = os.getcwd()
-    folder_path = os.path.join(wd_path,"scrap_output")
+    folder_path = os.path.join(wd_path,"scrap_output/images")
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    with open(f'{folder_path}/{img_name}jpg', 'wb') as handler: 
+    with open(f'{folder_path}/{img_name}.jpg', 'wb') as handler: 
         handler.write(img_data) 
     return image_url_dict
 
@@ -63,10 +95,12 @@ def book_scrapper(url):
     page = get_html_code(url)
     page
     title_cat_dict = title_n_category(page)
+    star_rating_dict = get_star_rating(page)
     description_dict = get_description(page)
     table_info_dict = get_table_infos(page)
     image_url_dict = image_urls(url, page)
     scrap_dict = title_cat_dict.copy()
+    scrap_dict.update(star_rating_dict)
     scrap_dict.update(description_dict)
     scrap_dict.update(table_info_dict)
     scrap_dict.update(image_url_dict)
@@ -104,8 +138,8 @@ def category_to_csv(book_data):
     folder_path = os.path.join(wd_path,"scrap_output")
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-    with open(f'{folder_path}/{category}.csv', mode='a', newline='') as fichier_csv:
-        fieldnames = ['Title','Category', 'Description', 'UPC',
+    with open(f'{folder_path}/{category}.csv', mode='a', newline='', encoding='utf-8') as fichier_csv:
+        fieldnames = ['Title','Category', 'star rating', 'Description', 'UPC',
                       'Product Type', 'Price (excl. tax)', 'Price (incl. tax)', 'Tax', 'Availability', 
                       'Number of reviews', 'image url']
         writer = csv.DictWriter(fichier_csv, fieldnames)
