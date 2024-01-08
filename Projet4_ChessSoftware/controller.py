@@ -18,35 +18,34 @@ class Controller:
             data = View.display_add_players()
             player = Player(**data)
             tournament.add_player_to_tournament(player)
+            #Appeler le Json
+            #Ajouter player au à la clé players_list
+            #Enregistrer le json
             i += 1
         View.display_players_list(tournament.players_list)
 
-    # def create_match(tournament):
-    #     player_list = tournament.players_list
-    #     random_player_1 = random.choices(tournament.players_list, k=1)
-
     @staticmethod
     def create_matches(tournament, players_list):
+        """Création de matchs, réunis en un un round (liste de matchs)"""
         match_list = list()
-        transit_list = players_list
+        transit_list = players_list.copy()
         while len(transit_list) >= 2 :
             random.shuffle(transit_list)
             match = Match(transit_list)
             match_list.append(match)
             transit_list.pop(0)
             transit_list.pop(0)
-            #match_list.append((match.player1, match.player2 ))
-            #match_list.append(match.player1)
         round = Round(match_list)
         tournament.register_round_in_tournament(round)
+        #Appeler le Json
+        #Ajouter round  à la clé rounds
+        #Enregistrer le json
     
     @staticmethod
     def set_score(match: Match):
         winner = View.display_set_scores(match)
-        print(winner)
         player1 = match.player1
         player2 = match.player2
-        print(f'Winner number is {winner}')
         if winner == '1':
             match.score1 = 2
             player1.points += match.score1
@@ -60,6 +59,9 @@ class Controller:
             match.score2 = 1
             player1.points += match.score1
             player2.points += match.score2
+        #Appeler le Json
+        # Mettre à jour le score des matchs
+        #Enregistrer le json
             
       
 
@@ -69,13 +71,12 @@ class Controller:
         round = tournament.round_list[-1]
         for match in round:
             Controller.set_score(match)
-        
-        print('Round terminé:')
         View.display_scores(tournament)
             
 
-       
+
 tournament = Controller.create_tournament()
 Controller.create_players(tournament)
-Controller.create_matches(tournament, tournament.players_list)
-Controller.play_round(tournament)
+for i in range(tournament.turns):
+    Controller.create_matches(tournament, tournament.players_list)
+    Controller.play_round(tournament)

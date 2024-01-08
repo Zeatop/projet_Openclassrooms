@@ -14,6 +14,15 @@ class Player:
     
     def __str__(self):
         return f"{self.surname} {self.name}"
+    
+    def serialize(self):
+        return {
+            'name' : self.name,
+            'surname' : self.surname,
+            'birthdate' : self.birthdate,
+            'chessID' : self.chessID,
+            'points' : self.points
+        }
 
 
 class Match:
@@ -28,6 +37,11 @@ class Match:
     
     def __str__(self):
             return f"{self.player1} vs {self.player2}" if self.player2 else f"{self.player1}"
+    
+    def serialize(self):
+        return {
+            'matchInfo' : self.matchInfo
+        }
                  
          
 
@@ -42,6 +56,11 @@ class Round:
     def __str__(self):
         match_str_list = [str(match) for match in self.matches]
         return "\n".join(match_str_list)
+    
+    def serialize(self):
+        return {
+            'matches' : self.matches
+        }
         
 
 class Tournament:
@@ -62,9 +81,18 @@ class Tournament:
 
     def register_round_in_tournament(self, round:Round):
         self.round_list.append(round.matches)
-    
-    def which_round(self):
-        self.which_round = len(self.round_list)
+
+    def serialize(self):
+        return {
+            'name' : self.name,
+            'max_players' : self.max_players,
+            'place' : self.place,
+            'start' : self.start,
+            'end' : self.end,
+            'players_list' : [],
+            'round_list' : [],
+            'turns' : self.turns
+        }
 
 
 

@@ -118,7 +118,7 @@ class View:
     @staticmethod
     def display_set_scores(match):
         print('#' * 20)
-        print(f'{match.player1} vs. {match.player1}:')
+        print(f'{match.player1} vs. {match.player2}:')
         if settings.AUTOCOMPLETION == True:
             random_number = fake.pyint(min_value=1, max_value=3)
             winner = str(random_number)
@@ -131,6 +131,7 @@ class View:
     
     @staticmethod
     def display_scores(tournament):
+        print(f"\n{'#'* 20} \nFin du round n°{len(tournament.round_list)}")
         round = tournament.round_list[-1]
         players_score = list()
         headers = ["Nom", "Prénom", "Score"]
