@@ -136,7 +136,7 @@ class View:
         players_score = list()
         headers = ["Nom", "Prénom", "Score"]
         players_score.append(headers)
-        for match in round:
+        for match in round.matches:
             player1 = match.player1
             player1 = [player1.name, player1.surname, player1.points]
             player2 = match.player2
@@ -144,5 +144,17 @@ class View:
             players_score.append(player1)
             players_score.append(player2)
         print_table(players_score)
+
+    @staticmethod
+    def display_end(tournament):
+        print('*'*40)
+        print(f"Le Tournoi {tournament.name} est Terminé. \n Le vainqueur est: ")
+        wish = input("\n \nVoulez-vous relancer un tournoi ? \nOui: o\nNon: n \nRéponse: ")
+        if wish != 'o':
+            return
+        print('*'*40)
+        return wish
+
+
 
 

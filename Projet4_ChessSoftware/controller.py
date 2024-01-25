@@ -18,9 +18,6 @@ class Controller:
             data = View.display_add_players()
             player = Player(**data)
             tournament.add_player_to_tournament(player)
-            #Appeler le Json
-            #Ajouter player au à la clé players_list
-            #Enregistrer le json
             i += 1
         View.display_players_list(tournament.players_list)
 
@@ -37,9 +34,6 @@ class Controller:
             transit_list.pop(0)
         round = Round(match_list)
         tournament.register_round_in_tournament(round)
-        #Appeler le Json
-        #Ajouter round  à la clé rounds
-        #Enregistrer le json
     
     @staticmethod
     def set_score(match: Match):
@@ -59,9 +53,9 @@ class Controller:
             match.score2 = 1
             player1.points += match.score1
             player2.points += match.score2
-        #Appeler le Json
-        # Mettre à jour le score des matchs
-        #Enregistrer le json
+        
+        match.round.tournament.save_to_json()
+
             
       
 
@@ -69,8 +63,9 @@ class Controller:
     def play_round(tournament):
         View.display_start_round(tournament)
         round = tournament.round_list[-1]
-        for match in round:
+        for match in round.matches:
             Controller.set_score(match)
+            print(round)
         View.display_scores(tournament)
             
 
