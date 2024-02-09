@@ -21,22 +21,23 @@ class Player:
         return {
             'name' : self.name,
             'surname' : self.surname,
-            'birthdate' : self.birthdate,
+            'birthdate' : self.birthdate.strftime("%Y-%m-%d"),
             'chessID' : self.chessID,
             'points' : self.points
         }
     
     @classmethod
     def deserialize(cls, players_data):
-        return Player(name=players_data['name'], surname=players_data["surname"], birthdate=players_data['birthdate'],
-                      chessID=players_data['chessID'], points=players_data['points'])
+        return Player(**players_data)
         
+
+
 
 
 
 class Match:
     
-    def __init__(self, players_list:list, score1 = None, score2 = None):
+    def __init__(self, players_list:list, score1 = 0, score2 = 0):
             self.player1 = players_list[0]
             self.player2 = players_list[1]
             self.match = (self.player1, self.player2)
@@ -66,12 +67,8 @@ class Match:
             json_file.write(tournament_data)
         json_file.close()
 
-    @classmethod
     def deserialize(cls, match_data):
-        player1 = Player.deserialize(match_data['player1'])
-        player2 = Player.deserialize(match_data['player2'])
-        return cls(players_list=[player1, player2],
-                   score1=match_data['score1'], score2=match_data['score2'])
+        return Match(**match_data)
                  
          
 
@@ -93,30 +90,28 @@ class Round:
         }
     
     @classmethod
-    def deserialize(cls, round_data):
-        return cls(round_matches=round_data)
-        # round_list = tournament_data['round_list']
-        # for round in round_list:
-        #     match_list = round_list[round]
-        #     for match in match_list:
-        #         Match.deserialize(match, save = False)
+    def deserialize(cls, tournament_data):
+        round_list = tournament_data['round_list']
+        for round in round_list:
+            match_list = round_list[round]
+            for match in match_list:
+                Match.deserialize(match, save = False)
 
             
         
 
 class Tournament:
 
-    def __init__(self, name:str, place:str, start:str, end:str, max_players:int, turns:int=10, save=True):
+    def __init__(self, name:str, place:str, start:str, end:str, max_players:int, turns:int=10,):
         self.players_list = list()
         self.round_list = list()
         self.name = name
         self.place = place
         self.start = start
         self.end = end
-        self.max_players = int(max_players)
-        self.turns = int(turns)
-        if save:
-            self.save_to_json()
+        self.max_players = max_players
+        self.turns = turns
+        self.save_to_json()
 
 
     def add_player_to_tournament(self, player:Player, save=True):
@@ -126,11 +121,10 @@ class Tournament:
             self.save_to_json()
 
 
-    def register_round_in_tournament(self, round:Round, save=True):
+    def register_round_in_tournament(self, round:Round):
         self.round_list.append(round)
         round.tournament = self
-        if save:
-            self.save_to_json()
+        self.save_to_json()
 
 
     def serialize(self):
@@ -138,11 +132,11 @@ class Tournament:
             'name' : self.name,
             'max_players' : self.max_players,
             'place' : self.place,
-            'start' : self.start,
-            'end' : self.end,
+            'start' : self.start.strftime("%Y-%m-%d"),
+            'end' : self.end.strftime("%Y-%m-%d"),
             'players_list' : [p.serialize() for p in self.players_list],
             'round_list' : [r.serialize() for r in self.round_list] if self.round_list else [],
-            'turns' : int(self.turns)
+            'turns' : self.turns
         }
     
     def save_to_json(self):
@@ -150,32 +144,41 @@ class Tournament:
         tournament_data = json.dumps(class_dict, indent = 4)
         with open(f"{self.name}.json", "w") as json_file:
             json_file.write(tournament_data)
-
-    # @staticmethod
-    # def open_json():
-
+        json_file.close()
 
     @classmethod
-    def deserialize(cls, tournament_data):
+    def deserialize(cls, json_file):
+        with open(f"{json_file}.json", "r") as json_file:
+            tournament_data = json.load(json_file)
+        json_file.close()
         tournament = Tournament(name=tournament_data['name'], max_players=tournament_data['max_players'],
                                 place=tournament_data['place'], start=tournament_data['start'], 
-                                end=tournament_data['end'], turns=tournament_data['turns'], save=False)
+                                end=tournament_data['end'], turns=tournament_data['turns'])
         players_list = tournament_data['players_list']
         for player in players_list:
-            player = Player.deserialize(player) #Diviser la déserialisation dans Player.deserialize
+            Player.deserialize(player)
             tournament.add_player_to_tournament(player, save=False)
         round_list = tournament_data['round_list']
-        for round_data in round_list:
-            round = list()
-            for match in round_data['matches']:
-                match = Match.deserialize(match_data=match)
-                round.append(match)
-            # for match in round:
-            #     Match.deserialize(match_data=match)
-            #     print(round)
-            round = Round.deserialize(round)
-            tournament.register_round_in_tournament(round, save=False)
-        
+        for data in round_list:
+            round = Round.deserialize(data, save=False)
         return tournament
 
-    
+    def is_tournament_finished(self):
+        if self.turns == len(self.round_list):
+            wish = View.display_end()
+        
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,7 +1,7 @@
 import settings
 from faker import Faker
+import random
 from prettytable import PrettyTable
-import json
 fake = Faker()
 
 
@@ -19,33 +19,20 @@ class View:
     
 
     @staticmethod
-    def display_start_menu():
-        wish = input("Démarrer un tournoi ? (press 1) \nRelancer un tournoi: press(2) \nRapports: (press 3) \nQuitter: (press anything else) \nRéponse: ")
-        if wish != '1' and wish !='2' and wish !='3':
+    def display_create_tournament():
+        wish = input("Voulez-vous démarrer un tournoi ? \nOui: o\nNon: n \nRéponse: ")
+        if wish != 'o':
             return
-        elif wish == '3':
-            which = input("De quel tournoi voulez-vous le rapport ? (sans extension) \nRéponse: ")
-            wish = (wish, which)
-            print (wish)
-            return wish
-        elif wish == '2':
-            which = input("Quel tournoi voulez-vous Redémarrer ? (sans extension)\nRéponse: ")
-            wish = (wish, which)
-            print (wish)
-            return wish
-        elif wish =='1': 
-            return wish
-
-    def display_create_tournament(): 
+        
         print('#' * 20)
         print("Création d'un tournoi")
         print('#' * 20)
-    
+
         if settings.AUTOCOMPLETION == True:
             name = 'Test'
             place = fake.city()
-            start = 'date'
-            end = 'date'
+            start = fake.date_this_month(before_today = True)
+            end = fake.date_this_month(after_today = True)
             max_players = 10
             turns = fake.pyint(max_value = 10)
             return {
@@ -90,7 +77,7 @@ class View:
         if settings.AUTOCOMPLETION == True:
             name = fake.last_name()
             surname = fake.first_name()
-            birthdate = 'date'
+            birthdate = fake.date_of_birth(minimum_age = 15)
             chessID = fake.bothify(text='??-#####')
             return {
                 'name': name, 
@@ -143,9 +130,8 @@ class View:
         return winner
     
     @staticmethod
-    def display_scores(tournament, report=False):
-        if report == False:
-            print(f"\n{'#'* 20} \nFin du round n°{len(tournament.round_list)}")
+    def display_scores(tournament):
+        print(f"\n{'#'* 20} \nFin du round n°{len(tournament.round_list)}")
         round = tournament.round_list[-1]
         players_score = list()
         headers = ["Nom", "Prénom", "Score"]
@@ -162,48 +148,12 @@ class View:
     @staticmethod
     def display_end(tournament):
         print('*'*40)
-        print(f"Le Tournoi {tournament.name} est Terminé. \n Le vainqueur est: {tournament.players_list[0]} ")
-        View.display_report(tournament)
+        print(f"Le Tournoi {tournament.name} est Terminé. \n Le vainqueur est: ")
         wish = input("\n \nVoulez-vous relancer un tournoi ? \nOui: o\nNon: n \nRéponse: ")
         if wish != 'o':
             return
         print('*'*40)
         return wish
-    
-    @staticmethod
-    def display_report(tournament):
-        print('*' * 40 )
-        print(f"\n Rapport du tournoi: {tournament.name} \n")
-        View.display_scores(tournament, report=True)
-        print('\n'+('*' * 40) )
-        return
-    
-    def report(self):
-        print("*"*50,
-              "\nRapport de tournoi d'échecs")
-        tournament = View.display_tournament(self)
-        print(tournament)
-        View.display_scores(self, report=True)
-        print("*"*50)
-    
-    @staticmethod
-    def display_report_from_start(rapport:dict):
-        print('*' * 40 )
-        print(f"\n Rapport du tournoi: {rapport['name']} \n")
-        print(json.dumps(rapport, sort_keys=True,indent=4,separators=(',', ': ')))
-        print('\n'+('*' * 40) )
-        return
-    
-    @staticmethod
-    def last_choice():
-        wish = input("Rapport rapide: (press 1) \nRapport détaillé: (press 2) \nQuitter: (press anything else) \nRéponse: ")
-        if wish != '1' and wish !='2' and wish !='3':
-            pass
-        elif wish == '1':
-            return wish 
-        elif wish == '2':
-            return wish 
-
 
 
 
